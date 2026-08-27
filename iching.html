@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Ching Cheat</title>
+    <style>
+        /* Load your custom I-Ching font */
+        @font-face {
+            font-family: 'IChingCustom';
+            src: url('I-Ching.ttf') format('truetype');
+        }
+
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --border: #1e293b;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Outer Layout wrapper */
+        .matrix-layout {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            padding: 10px;
+        }
+
+        /* 1. TOP HORIZONTAL SCROLLBAR */
+        .top-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            height: 14px;
+            margin-bottom: 8px;
+        }
+        .top-scroll-spacer {
+            height: 1px;
+            /* Width gets set dynamically by Javascript */
+        }
+        .top-scroll-container::-webkit-scrollbar {
+            height: 10px;
+        }
+        .top-scroll-container::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 5px;
+        }
+        .top-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        /* 2. MAIN HORIZONTAL CONTAINER (Bottom native scrollbar hidden) */
+        .horizontal-container {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .horizontal-container::-webkit-scrollbar {
+            display: none; /* Hide Chrome/Safari bottom scrollbar */
+        }
+
+        /* 3. LEFT VERTICAL SCROLLBAR */
+        .vertical-left-container {
+            direction: rtl; /* Forces scrollbar to the left side */
+            max-height: 70vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            width: max-content;
+            min-width: 100%;
+        }
+        .vertical-left-container::-webkit-scrollbar {
+            width: 10px;
+        }
+        .vertical-left-container::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 5px;
+        }
+        .vertical-left-container::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        /* 4. GRID CONTENT WRAPPER (Restores text direction to normal) */
+        .grid-content-wrapper {
+            direction: ltr; /* Sets text back to normal left-to-right */
+            display: inline-block;
+            width: max-content;
+            min-width: 100%;
+            padding-left: 8px; /* Buffer spacing away from the scrollbar */
+        }
+
+        .grid-8x8 {
+            display: grid;
+            grid-template-columns: 55px repeat(8, 110px);
+            grid-template-rows: 55px repeat(8, 110px);
+            gap: 6px;
+        }
+        .header {
+            background-color: #1e293b;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3rem;
+            border-radius: 4px;
+            font-family: 'IChingCustom', sans-serif;
+        }
+        .corner {
+            background-color: #0b0f19;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.2;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        /* Forced square boxes */
+        .cell {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 4px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            width: 110px;
+            height: 110px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .cell:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            background-color: #1a233a;
+        }
+        
+        .symbol {
+            font-family: 'IChingCustom', sans-serif; /* Applies your custom font */
+            font-size: 2rem; /* Adjusted for custom font */
+            line-height: 1.1;
+            margin-bottom: 2px;
+            color: var(--text-main);
+        }
+
+        .num {
+            font-size: 0.55rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        .name {
+            font-size: 0.85rem; 
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 1px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        .meaning {
+            font-size: 0.5rem;
+            color: var(--accent);
+            background-color: rgba(56, 189, 248, 0.08);
+            border: 1px dashed rgba(56, 189, 248, 0.3);
+            padding: 2px 2px;
+            border-radius: 3px;
+            line-height: 1.1;
+            margin-top: 2px;
+            width: 100%;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <p class="subtitle"></p>
+
+    <!-- Matrix Layout Container -->
+    <div class="matrix-layout">
+        
+        <!-- Top Horizontal Scrollbar -->
+        <div class="top-scroll-container" id="topScroll">
+            <div class="top-scroll-spacer" id="spacer"></div>
+        </div>
+
+        <!-- Hidden Bottom Scrollbar Container -->
+        <div class="horizontal-container" id="mainScroll">
+            
+            <!-- Left Vertical Scrollbar Container -->
+            <div class="vertical-left-container">
+                
+                <!-- Inner Layout (Restores Normal Reading Direction) -->
+                <div class="grid-content-wrapper" id="contentWrapper">
+                    <div class="grid-8x8" id="gridContainer"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const trigrams = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
+
+        // Uses Traditional Chinese Characters for all 64 hexagrams
+        const matrixData = [
+            [
+                {n: "乾", m: "The Creative, Heaven", num: 1},
+                {n: "夬", m: "Breakthrough", num: 43},
+                {n: "大有", m: "Great Possession", num: 14},
+                {n: "大壯", m: "Great Power", num: 34},
+                {n: "小畜", m: "Small Taming", num: 9},
+                {n: "需", m: "Waiting, Patience", num: 5},
+                {n: "大畜", m: "Great Taming", num: 26},
+                {n: "泰", m: "Peace, Flow", num: 11}
+            ],
+            [
+                {n: "履", m: "Treading, Conduct", num: 10},
+                {n: "兌", m: "The Joyous, Lake", num: 58},
+                {n: "睽", m: "Opposition", num: 38},
+                {n: "歸妹", m: "Marrying Maiden", num: 54},
+                {n: "中孚", m: "Inner Truth", num: 61},
+                {n: "節", m: "Limitation", num: 60},
+                {n: "損", m: "Decrease", num: 41},
+                {n: "臨", m: "Approach", num: 19}
+            ],
+            [
+                {n: "同人", m: "Fellowship", num: 13},
+                {n: "革", m: "Revolution", num: 49},
+                {n: "離", m: "The Clinging, Fire", num: 30},
+                {n: "豐", m: "Abundance", num: 55},
+                {n: "家人", m: "The Family", num: 37},
+                {n: "既濟", m: "After Completion", num: 63},
+                {n: "賁", m: "Grace, Adornment", num: 22},
+                {n: "明夷", m: "Darkening of Light", num: 36}
+            ],
+            [
+                {n: "無妄", m: "Innocence", num: 25},
+                {n: "隨", m: "Following", num: 17},
+                {n: "噬嗑", m: "Biting Through", num: 21},
+                {n: "震", m: "The Arousing", num: 51},
+                {n: "益", m: "Increase, Expansion", num: 42},
+                {n: "屯", m: "Initial Difficulty", num: 3},
+                {n: "頤", m: "Nourishment", num: 27},
+                {n: "復", m: "Return, Turning Point", num: 24}
+            ],
+            [
+                {n: "姤", m: "Coming to Meet", num: 44},
+                {n: "大過", m: "Great Preponderance", num: 28},
+                {n: "鼎", m: "The Cauldron", num: 50},
+                {n: "恆", m: "Duration", num: 32},
+                {n: "巽", m: "The Gentle, Wind", num: 57},
+                {n: "井", m: "The Well, Source", num: 48},
+                {n: "蠱", m: "Work on Decayed", num: 18},
+                {n: "升", m: "Pushing Upward", num: 46}
+            ],
+            [
+                {n: "訟", m: "Conflict, Dispute", num: 6},
+                {n: "困", m: "Oppression", num: 47},
+                {n: "未濟", m: "Before Completion", num: 64},
+                {n: "解", m: "Deliverance, Relief", num: 40},
+                {n: "渙", m: "Dispersion", num: 59},
+                {n: "坎", m: "The Abysmal, Water", num: 29},
+                {n: "蒙", m: "Youthful Folly", num: 4},
+                {n: "師", m: "The Army", num: 7}
+            ],
+            [
+                {n: "遯", m: "Retreat", num: 33},
+                {n: "咸", m: "Influence", num: 31},
+                {n: "旅", m: "The Wanderer", num: 56},
+                {n: "小過", m: "Small Preponderance", num: 62},
+                {n: "漸", m: "Development", num: 53},
+                {n: "蹇", m: "Obstruction", num: 39},
+                {n: "艮", m: "Keeping Still", num: 52},
+                {n: "謙", m: "Modesty, Balance", num: 15}
+            ],
+            [
+                {n: "否", m: "Standstill", num: 12},
+                {n: "萃", m: "Gathering Together", num: 45},
+                {n: "晉", m: "Progress, Advance", num: 35},
+                {n: "豫", m: "Enthusiasm, Joy", num: 16},
+                {n: "觀", m: "Contemplation", num: 20},
+                {n: "比", m: "Union, Alliance", num: 8},
+                {n: "剝", m: "Splitting Apart", num: 23},
+                {n: "坤", m: "The Receptive, Earth", num: 2}
+            ]
+        ];
+
+        const container = document.getElementById('gridContainer');
+
+        const corner = document.createElement('div');
+        corner.className = 'header corner';
+        corner.innerHTML = "UPPER&rarr;<br>LOWER&darr;";
+        container.appendChild(corner);
+
+        for (let c = 0; c < 8; c++) {
+            const th = document.createElement('div');
+            th.className = 'header';
+            th.textContent = trigrams[c];
+            container.appendChild(th);
+        }
+
+        for (let r = 0; r < 8; r++) {
+            const lh = document.createElement('div');
+            lh.className = 'header';
+            lh.textContent = trigrams[r];
+            container.appendChild(lh);
+
+            for (let c = 0; c < 8; c++) {
+                const item = matrixData[r][c];
+                // Generates hexagrams using Unicode starting at U+4DC0
+                const unicodeSymbol = String.fromCharCode(0x4DC0 + (item.num - 1));
+
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.innerHTML = `
+                    <div class="symbol">${unicodeSymbol}</div>
+                    <div class="num">#${item.num}</div>
+                    <div class="name">${item.n}</div>
+                    <div class="meaning">${item.m}</div>
+                `;
+                container.appendChild(cell);
+            }
+        }
+
+        // SCROLLBAR SYNCHRONIZATION LOGIC 
+        const topScroll = document.getElementById('topScroll');
+        const mainScroll = document.getElementById('mainScroll');
+        const contentWrapper = document.getElementById('contentWrapper');
+        const spacer = document.getElementById('spacer');
+
+        // Dynamically matches the top dummy scrollbar size to the real grid size
+        function updateSpacerWidth() {
+            spacer.style.width = contentWrapper.scrollWidth + 'px';
+        }
+        
+        // Initial setup and listener for screen resize
+        updateSpacerWidth();
+        window.addEventListener('resize', updateSpacerWidth);
+
+        // Locks prevent infinite scrolling loops when dragging scrollbars
+        let syncLockTop = false;
+        let syncLockMain = false;
+
+        topScroll.addEventListener('scroll', () => {
+            if (syncLockTop) {
+                syncLockTop = false;
+                return;
+            }
+            syncLockMain = true;
+            mainScroll.scrollLeft = topScroll.scrollLeft;
+        });
+
+        mainScroll.addEventListener('scroll', () => {
+            if (syncLockMain) {
+                syncLockMain = false;
+                return;
+            }
+            syncLockTop = true;
+            topScroll.scrollLeft = mainScroll.scrollLeft;
+        });
+    </script>
+</body>
+</html>
